@@ -1,0 +1,29 @@
+const textureCount = 30;
+const coinPath = "./assets/coin/coin_";
+const coinTextures = [];
+for (let i = 0; i < textureCount; i++) {
+  const fullNumber = "000" + i.toString();
+  const uniqueNumber = fullNumber.substring(fullNumber.length - 3);
+  const path = coinPath + uniqueNumber + ".png";
+  const texture = PIXI.Texture.from(path);
+  coinTextures.push(texture);
+
+  if (i == textureCount - 1) {
+    texture.baseTexture.once("loaded", onTexturesLoaded);
+  }
+}
+
+function onTexturesLoaded() {
+  const config = {
+    textures: coinTextures,
+    x: app.screen.width / 2,
+    y: app.screen.height / 2,
+    autoplay: true,
+    quantity: 1,
+    velocity: { x: 0, y: -2000 },
+    gravity: { x: 0, y: 9 },
+    lifespan: 10000,
+    size: { width: 20, height: 20 },
+  };
+  const particles = new Particles(config);
+}
