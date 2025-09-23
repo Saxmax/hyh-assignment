@@ -9,4 +9,9 @@ for (let i = 0; i < 30; i++) {
   coinTextures.push(texture);
 }
 
-const particles = new Particles(app.screen.width / 2, app.screen.height / 2, coinTextures);
+const config = {
+  x: 1337,
+  y: 404,
+  autoplay: true,
+};
+const particles = new Particles(config);
