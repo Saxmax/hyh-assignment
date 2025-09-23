@@ -40,8 +40,10 @@ const Particles = function Particles(config) {
   this.container;
   this.particles = [];
   this.frames = [];
-  this.isPlaying = false;
-  this.elapsed = 0;
+
+  this._isPlaying = false;
+  this._elapsed = 0;
+  this._countdown = 0;
   this._emitted = 0;
 
   this.initialize();
@@ -115,31 +117,54 @@ Particles.prototype._updateAnimatedSprite = function () {
 
 Particles.prototype._getFreeParticle = function () {
   return this.particles.find(function (particle) {
-    return particle.isAlive === false;
+    return particle._getIsAlive() === false;
   });
 };
 
 Particles.prototype._getActiveParticles = function () {
   return this.particles.filter(function (particle) {
-    return particle.isAlive === true;
+    return particle._getIsAlive() === true;
   });
 };
 
+Particles.prototype._resetParticle = function (particle) {
+  particle.setSize(this.size.width, this.size.height);
+  particle.setAngle(0);
+  particle.setAlpha(1);
+  particle.setEmitPosition(this.emitPosition.x, this.emitPosition.y);
+  particle.setAcceleration(this.acceleration.x, this.acceleration.y);
+  particle.setGravity(this.gravity.x, this.gravity.y);
+
+  const velocity = {
+    x: Math.random() * 1000 - 500,
+    y: Math.random() * -750 - 500,
+  };
+  particle.setInitialVelocity(velocity.x, velocity.y);
+};
+
+Particles.prototype._emitParticle = function () {
+  const particle = this._getFreeParticle();
+  if (particle === undefined) return;
+
+  this._resetParticle(particle);
+  particle._emit();
+  this._emitted += 1;
+};
+
 Particles.prototype._onTick = function () {
-  if (this.isPlaying === false) return;
+  if (this._isPlaying === false) return;
 
   const dt = app.ticker.deltaMS;
-  this.elapsed += dt;
+  this._elapsed += dt;
 
-  // Check to spawn next particle.
-  if (this._emitted < this.elapsed / this.frequency) {
-    // console.log("Time to spawn next particle");
-    const particle = this._getFreeParticle();
-    if (particle) {
-      console.log("Found free particle");
-      this.resetParticle(particle);
-      particle.emit();
-      this._emitted += 1;
+  // Check to spawn a particle.
+  if (this.frequency == 0) {
+    this._emitParticle();
+  } else if (this.frequency > 0) {
+    this._countdown -= dt;
+    if (this._countdown <= 0) {
+      this._emitParticle();
+      this._countdown = this.frequency - Math.abs(this._countdown);
     }
   }
 
@@ -148,9 +173,9 @@ Particles.prototype._onTick = function () {
   active.forEach(
     function (particle) {
       if (particle.elapsed + dt >= this.lifespan) {
-        particle.reset();
+        particle._reset();
       } else {
-        particle.onTick(dt);
+        particle._onParticleUpdate(dt);
       }
     }.bind(this)
   );
@@ -161,47 +186,32 @@ Particles.prototype.setDuration = function (animationDuration) {
   this._updateAnimatedSprite();
 };
 
-Particles.prototype.resetParticle = function (particle) {
-  particle.setSize(this.size.width, this.size.height);
-  particle.setAngle(0);
-  particle.setAlpha(1);
-  particle.setEmitPosition(this.emitPosition.x, this.emitPosition.y);
-  particle.setAcceleration(this.acceleration.x, this.acceleration.y);
-  particle.setGravity(this.gravity.x, this.gravity.y);
-  particle.setVelocity(this.velocity.x, this.velocity.y);
-};
-
 Particles.prototype.play = function () {
-  if (this.isPlaying === true) return;
-
-  // for (let i = 0; i < this.particles.length; i++) {
-  //   const particle = this.particles[i];
-  //   this.resetParticle(particle);
-  //   particle.emit();
-  // }
+  if (this._isPlaying === true) return;
 
   this._emitted = 0;
-  this.elapsed = 0;
-  this.isPlaying = true;
+  this._elapsed = 0;
+  this._countdown = this.frequency || 0;
+  this._isPlaying = true;
 };
 
 Particles.prototype.pause = function () {
-  if (this.isPlaying === true) return;
-  this.isPlaying = false;
+  if (this._isPlaying === true) return;
+  this._isPlaying = false;
 };
 
 Particles.prototype.resume = function () {
-  if (this.isPlaying === false) return;
-  this.isPlaying = true;
+  if (this._isPlaying === false) return;
+  this._isPlaying = true;
 };
 
 Particles.prototype.stop = function () {
-  if (this.isPlaying === false) return;
+  if (this._isPlaying === false) return;
 
   for (let i = 0; i < this.particles.length; i++) {
     const particle = this.particles[i];
-    particle.reset();
+    particle._reset();
   }
 
-  this.isPlaying = false;
+  this._isPlaying = false;
 };

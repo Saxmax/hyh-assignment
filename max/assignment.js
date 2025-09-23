@@ -19,11 +19,12 @@ function onTexturesLoaded() {
     x: app.screen.width / 2,
     y: app.screen.height / 2,
     autoplay: true,
-    quantity: 1,
-    velocity: { x: 0, y: -2000 },
-    gravity: { x: 0, y: 9 },
-    lifespan: 10000,
+    quantity: 256,
+    // velocity: { x: 0, y: -2000 },
+    gravity: { x: 0, y: 2000 },
+    lifespan: 3000,
     size: { width: 20, height: 20 },
+    frequency: 50,
   };
   const particles = new Particles(config);
 }

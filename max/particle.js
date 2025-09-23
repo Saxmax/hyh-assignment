@@ -9,8 +9,11 @@ const Particle = function Particle(frames) {
 
   this.emitPosition = { x: 0, y: 0 };
   this.gravity = { x: 0, y: 0 };
-  this.velocity = { x: 0, y: 0 };
+  this.initialVelocity = { x: 0, y: 0 };
+  this.maxVelocity = { x: 0, y: 0 };
   this.acceleration = { x: 0, y: 0 };
+
+  this._velocity = { x: 0, y: 0 };
 
   this.deltaTime = 0;
   this.deltaTimeMs = 0;
@@ -20,7 +23,7 @@ const Particle = function Particle(frames) {
   this.sprite.visible = false;
 };
 
-Particle.prototype.onTick = function (dt) {
+Particle.prototype._onParticleUpdate = function (dt) {
   if (this.isAlive === false) return;
 
   this.deltaTime = dt / 1000;
@@ -28,14 +31,13 @@ Particle.prototype.onTick = function (dt) {
 
   this.elapsed += this.deltaTimeMs;
 
-  this.sprite.x += this.velocity.x * this.deltaTime;
-  this.sprite.y += this.velocity.y * this.deltaTime;
+  this._updateVelocity();
 
-  this.velocity.x += this.acceleration.x + this.gravity.x;
-  this.velocity.y += this.acceleration.y + this.gravity.y;
+  this.sprite.x += this._velocity.x * this.deltaTime;
+  this.sprite.y += this._velocity.y * this.deltaTime;
 };
 
-Particle.prototype.emit = function () {
+Particle.prototype._emit = function () {
   this.sprite.x = this.emitPosition.x;
   this.sprite.y = this.emitPosition.y;
   this.sprite.alpha = this.alpha;
@@ -45,19 +47,57 @@ Particle.prototype.emit = function () {
   this.sprite.visible = true;
   this.sprite.play();
 
+  this._velocity.x = this.initialVelocity.x;
+  this._velocity.y = this.initialVelocity.y;
+
   this.elapsed = 0;
   this.isAlive = true;
 };
 
-Particle.prototype.reset = function () {
+Particle.prototype._reset = function () {
   this.sprite.stop();
   this.sprite.visible = false;
   this.isAlive = false;
 };
 
+Particle.prototype._updateVelocity = function () {
+  let vx = this._velocity.x;
+  let vy = this._velocity.y;
+
+  vx += this.gravity.x * this.deltaTime;
+  vy += this.gravity.y * this.deltaTime;
+
+  vx += this.acceleration.x * this.deltaTime;
+  vy += this.acceleration.y * this.deltaTime;
+
+  if (this.maxVelocity.x != 0) {
+    vx = Utilities.clamp(vx, -this.maxVelocity.x, this.maxVelocity.x);
+  }
+  if (this.maxVelocity.y != 0) {
+    vy = Utilities.clamp(vy, -this.maxVelocity.y, this.maxVelocity.y);
+  }
+
+  this._velocity.x = vx;
+  this._velocity.y = vy;
+};
+
+Particle.prototype._getIsAlive = function () {
+  return this.isAlive === true;
+};
+
+Particle.prototype.setInitialVelocity = function (velocityX, velocityY) {
+  this.initialVelocity.x = velocityX;
+  this.initialVelocity.y = velocityY;
+};
+
+Particle.prototype.setMaxVelocity = function (maxVelocityX, maxVelocityY) {
+  this.maxVelocity.x = maxVelocityX;
+  this.maxVelocity.y = maxVelocityY;
+};
+
 Particle.prototype.setVelocity = function (velocityX, velocityY) {
-  this.velocity.x = velocityX;
-  this.velocity.y = velocityY;
+  this._velocity.x = velocityX;
+  this._velocity.y = velocityY;
 };
 
 Particle.prototype.setGravity = function (gravityX, gravityY) {

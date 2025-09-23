@@ -1,0 +1,5 @@
+const Utilities = function Utilities() {};
+
+Utilities.clamp = function (value, min, max) {
+  return Math.min(Math.max(value, min), max);
+};
