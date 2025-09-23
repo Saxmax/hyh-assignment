@@ -23,7 +23,7 @@ function onTexturesLoaded() {
     // velocity: { x: 0, y: -2000 },
     gravity: { x: 0, y: 2000 },
     lifespan: 3000,
-    size: { width: 20, height: 20 },
+    size: { width: 50, height: 50 },
     frequency: 50,
   };
   const particles = new Particles(config);
