@@ -19,10 +19,13 @@ function onTexturesLoaded() {
     x: app.screen.width / 2,
     y: app.screen.height / 2,
     autoplay: true,
-    quantity: 256,
+    quantity: 2,
+    // extendable: true,
+    // alpha: { start: 1, end: 0 },
+    angle: { start: 1, end: 0 }, // min/max
     // velocity: { x: 0, y: -2000 },
-    gravity: { x: 0, y: 2000 },
-    lifespan: 3000,
+    // gravity: { x: 0, y: 2000 },
+    lifespan: 300,
     size: { width: 50, height: 50 },
     frequency: 50,
   };
