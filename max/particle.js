@@ -30,12 +30,6 @@ Particle.prototype._createAnimatedSprite = function (frames) {
   this.sprite.visible = false;
 };
 
-Particle.Property = function Property() {};
-Particle.Property.Alpha = "alpha";
-Particle.Property.Angle = "angle";
-Particle.Property.Height = "height";
-Particle.Property.Width = "width";
-
 Particle.prototype._onParticleUpdate = function (dt) {
   if (this.isAlive === false) return;
 
@@ -74,6 +68,7 @@ Particle.prototype._emit = function () {
   this.sprite.x = this._emitPosition.x;
   this.sprite.y = this._emitPosition.y;
 
+  // Update multi-value properties.
   this._updateProperty(Particle.Property.Alpha);
   this._updateProperty(Particle.Property.Angle);
   this._updateProperty(Particle.Property.Height);
@@ -189,3 +184,9 @@ Particle.prototype.destroy = function () {
   this._manager._emitEvent(Particles.Events.ON_PARTICLE_DESTROY, this);
   this._manager = null;
 };
+
+Particle.Property = function Property() {};
+Particle.Property.Alpha = "alpha";
+Particle.Property.Angle = "angle";
+Particle.Property.Height = "height";
+Particle.Property.Width = "width";

@@ -1,25 +1,3 @@
-/* 
-  TODO =>
-  - events X
-  - animationDuration X
-  - destroy (manager) X
-  - destroy (particle) X
-  - pool extend dynamically X
-  - randomness
-  - scale in example
-  - tweens
-  - pause/unpause (timescale)
-  - emit first particle instantly (not based on frequency)
-
-  Bonus features:
-  - follow target
-
-  Testing still needed:
-  - Events (add, remove, multiple, once, all event types, context, data)
-  - Changing animation duration
-  - Destroying
-*/
-
 const Particles = function Particles(config) {
   this.config = this._getConfig(config);
 
@@ -58,9 +36,9 @@ const Particles = function Particles(config) {
 };
 
 Particles.DefaultConfig = {
+  textures: [],
   x: 0,
   y: 0,
-  textures: [],
   width: 50,
   height: 50,
   lifespan: 1000,
@@ -78,17 +56,6 @@ Particles.DefaultConfig = {
   autoplay: false,
   extendable: false,
 };
-
-Particles.Events = function Events() {};
-Particles.Events.ON_READY = "on_ready";
-Particles.Events.ON_PLAY = "on_play";
-Particles.Events.ON_STOP = "on_stop";
-Particles.Events.ON_UPDATE = "on_update";
-Particles.Events.ON_DESTROY = "on_destroy";
-Particles.Events.ON_PARTICLE_EMIT = "on_particle_emit";
-Particles.Events.ON_PARTICLE_DEATH = "on_particle_death";
-Particles.Events.ON_PARTICLE_UPDATE = "on_particle_update";
-Particles.Events.ON_PARTICLE_DESTROY = "on_particle_destroy";
 
 Particles.prototype.addEventListener = function (
   event,
@@ -309,11 +276,9 @@ Particles.prototype._onTick = function () {
 
   // Update active particles.
   const active = this._getActiveParticles();
-  active.forEach(
-    function (particle) {
-      particle._onParticleUpdate(dt);
-    } /* .bind(this) */
-  );
+  active.forEach(function (particle) {
+    particle._onParticleUpdate(dt);
+  });
 };
 
 Particles.prototype.setDuration = function (animationDuration, updateExisting) {
@@ -336,16 +301,7 @@ Particles.prototype.play = function () {
   this._isPlaying = true;
 
   this._emitEvent(Particles.Events.ON_PLAY);
-};
-
-Particles.prototype.pause = function () {
-  if (this._isPlaying === true) return;
-  this._isPlaying = false;
-};
-
-Particles.prototype.resume = function () {
-  if (this._isPlaying === false) return;
-  this._isPlaying = true;
+  this._emitParticle();
 };
 
 Particles.prototype.stop = function () {

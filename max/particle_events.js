@@ -1,0 +1,10 @@
+Particles.Events = function Events() {};
+Particles.Events.ON_READY = "on_ready";
+Particles.Events.ON_PLAY = "on_play";
+Particles.Events.ON_STOP = "on_stop";
+Particles.Events.ON_UPDATE = "on_update";
+Particles.Events.ON_DESTROY = "on_destroy";
+Particles.Events.ON_PARTICLE_EMIT = "on_particle_emit";
+Particles.Events.ON_PARTICLE_DEATH = "on_particle_death";
+Particles.Events.ON_PARTICLE_UPDATE = "on_particle_update";
+Particles.Events.ON_PARTICLE_DESTROY = "on_particle_destroy";
