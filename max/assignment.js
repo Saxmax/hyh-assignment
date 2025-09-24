@@ -24,9 +24,10 @@ function onTexturesLoaded() {
     // alpha: { start: 1, end: 0 },
     angle: { start: 0, end: 180 }, // min/max
     // velocity: { x: 0, y: -2000 },
-    gravity: { x: 0, y: 2000 },
+    // gravity: { x: 0, y: 2000 },
     lifespan: 1000,
-    size: { width: 50, height: 50 },
+    width: 50,
+    height: 50,
     frequency: 50,
   };
   const particles = new Particles(config);

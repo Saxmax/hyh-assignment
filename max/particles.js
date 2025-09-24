@@ -27,20 +27,22 @@ const Particles = function Particles(config) {
   this.extendable = this.config.extendable;
   this.quantity = this.config.quantity;
   this.frequency = this.config.frequency;
-  this.size = this.config.size;
   this.animationDuration = this.config.animationDuration;
   this.lifespan = this.config.lifespan;
-  this.emitPosition = { x: this.config.x, y: this.config.y };
-  this.emitPositionX = { min: this.config.x.min, max: this.config.x.max };
-  this.emitPositionY = { min: this.config.y.min, max: this.config.y.max };
-  // this.emitPositionY = { min: 0, max: 0 };
-  this.gravity = this.config.gravity;
-  this.velocity = this.config.velocity;
-  this.acceleration = this.config.acceleration;
 
-  // Multi-value properties
-  // this.angle = { start: 0, end: 0 };
-  this.angle = this.config.angle;
+  this.emitPositionX = this._getMinMaxValue(config.x);
+  this.emitPositionY = this._getMinMaxValue(config.y);
+  this.velocityX = this._getMinMaxValue(config.velocityX);
+  this.velocityY = this._getMinMaxValue(config.velocityY);
+  this.gravityX = this._getMinMaxValue(config.gravityX);
+  this.gravityY = this._getMinMaxValue(config.gravityY);
+  this.accelerationX = this._getMinMaxValue(config.accelerationX);
+  this.accelerationY = this._getMinMaxValue(config.accelerationY);
+
+  this.angle = this._getStartEndValue(config.angle);
+  this.alpha = this._getStartEndValue(config.alpha);
+  this.width = this._getStartEndValue(config.width);
+  this.height = this._getStartEndValue(config.height);
 
   this.container;
   this.particles = [];
@@ -59,13 +61,17 @@ Particles.DefaultConfig = {
   x: 0,
   y: 0,
   textures: [],
-  size: { width: 100, height: 100 },
+  width: 50,
+  height: 50,
   lifespan: 1000,
-  gravity: { x: 0, y: 0 },
-  velocity: { x: 0, y: 0 },
-  acceleration: { x: 0, y: 0 },
+  velocityX: 0,
+  velocityY: 0,
+  gravityX: 0,
+  gravityY: 0,
+  accelerationX: 0,
+  accelerationY: 0,
+  angle: 0,
   alpha: 1,
-  angle: { start: 0, end: 0 },
   animationDuration: 1000,
   quantity: 10,
   frequency: 1000,
@@ -158,11 +164,6 @@ Particles.prototype._getConfig = function (config) {
     }
   }
 
-  // Setup all multi-value properties.
-  config.angle = this._getStartEndValue(config.angle);
-  config.x = this._getMinMaxValue(config.x);
-  config.y = this._getMinMaxValue(config.y);
-
   return config;
 };
 
@@ -252,19 +253,28 @@ Particles.prototype._prepareParticle = function (particle) {
   );
   particle.setEmitPosition(ex, ey);
 
+  const vx = Utilities.getRandom(this.velocityX.min, this.velocityX.max);
+  const vy = Utilities.getRandom(this.velocityY.min, this.velocityY.max);
+  particle.setInitialVelocity(vx, vy);
+
+  const gx = Utilities.getRandom(this.gravityX.min, this.gravityX.max);
+  const gy = Utilities.getRandom(this.gravityY.min, this.gravityY.max);
+  particle.setGravity(gx, gy);
+
+  const ax = Utilities.getRandom(
+    this.accelerationX.min,
+    this.accelerationX.max
+  );
+  const ay = Utilities.getRandom(
+    this.accelerationY.min,
+    this.accelerationY.max
+  );
+  particle.setAcceleration(ax, ay);
+
   particle.setLifespan(this.lifespan);
-  particle.setAcceleration(this.acceleration.x, this.acceleration.y);
-  particle.setGravity(this.gravity.x, this.gravity.y);
-
-  particle.setAngle(this._getStartEndValue(this.angle));
-  particle.setAlpha(this._getStartEndValue(1));
-
-  const velocity = {
-    x: Math.random() * 1000 - 500,
-    y: Math.random() * -750 - 500,
-  };
-  particle.setInitialVelocity(velocity.x, velocity.y);
-  // particle.setInitialVelocity(this.velocity.x, this.velocity.y);
+  particle.setAngle(this.angle);
+  particle.setAlpha(this.alpha);
+  particle.setSize(this.width, this.height);
 };
 
 Particles.prototype._emitParticle = function () {
