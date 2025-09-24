@@ -11,3 +11,7 @@ Utilities.getRandom = function (min, max) {
 Utilities.normalize = function (value, max) {
   return value / max;
 };
+
+Utilities.lerp = function (start, end, t) {
+  return (end - start) * t + start;
+};

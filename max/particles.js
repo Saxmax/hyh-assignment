@@ -9,6 +9,7 @@
   - scale in example
   - tweens
   - pause/unpause (timescale)
+  - emit first particle instantly (not based on frequency)
 
   Bonus features:
   - follow target
@@ -27,16 +28,19 @@ const Particles = function Particles(config) {
   this.quantity = this.config.quantity;
   this.frequency = this.config.frequency;
   this.size = this.config.size;
-  this.scale = this.config.scale;
   this.animationDuration = this.config.animationDuration;
   this.lifespan = this.config.lifespan;
   this.emitPosition = { x: this.config.x, y: this.config.y };
+  this.emitPositionX = { min: this.config.x.min, max: this.config.x.max };
+  this.emitPositionY = { min: this.config.y.min, max: this.config.y.max };
+  // this.emitPositionY = { min: 0, max: 0 };
   this.gravity = this.config.gravity;
   this.velocity = this.config.velocity;
   this.acceleration = this.config.acceleration;
 
   // Multi-value properties
-  this.angle = { start: 0, end: 0 };
+  // this.angle = { start: 0, end: 0 };
+  this.angle = this.config.angle;
 
   this.container;
   this.particles = [];
@@ -60,7 +64,6 @@ Particles.DefaultConfig = {
   gravity: { x: 0, y: 0 },
   velocity: { x: 0, y: 0 },
   acceleration: { x: 0, y: 0 },
-  scale: { x: 1, y: 1 },
   alpha: 1,
   angle: { start: 0, end: 0 },
   animationDuration: 1000,
@@ -148,12 +151,17 @@ Particles.prototype._initialize = function () {
 Particles.prototype._getConfig = function (config) {
   if (config === undefined) config = {};
 
-  // Make sure all properties have a value
+  // Make sure all properties have a value.
   for (const [key, value] of Object.entries(Particles.DefaultConfig)) {
     if (config[key] === undefined) {
       config[key] = value;
     }
   }
+
+  // Setup all multi-value properties.
+  config.angle = this._getStartEndValue(config.angle);
+  config.x = this._getMinMaxValue(config.x);
+  config.y = this._getMinMaxValue(config.y);
 
   return config;
 };
@@ -213,53 +221,57 @@ Particles.prototype._getActiveParticles = function () {
   });
 };
 
-Particles.prototype._getStartEndValue = function (data) {
-  const result = { start: 0, end: 0 };
+Particles.prototype._getDualValue = function (data, a, b) {
+  const result = { [a]: data, [b]: data };
 
-  const isNumber = typeof data === "number";
-  if (isNumber) {
-    result.start = data;
-    result.end = data;
-  }
-
-  const isRandom = data.hasOwnProperty("min") && data.hasOwnProperty("max");
-  if (isRandom) {
-    const random = Utilities.getRandom(data.min, data.max);
-    result.start = random;
-    result.end = random;
-  }
-
-  const isRange = data.hasOwnProperty("start") && data.hasOwnProperty("end");
+  const isRange = data.hasOwnProperty(a) && data.hasOwnProperty(b);
   if (isRange) {
-    result.start = data.start;
-    result.end = data.end;
+    result[a] = data[a];
+    result[b] = data[b];
   }
 
   return result;
 };
 
-Particles.prototype._resetParticle = function (particle) {
+Particles.prototype._getStartEndValue = function (data) {
+  return this._getDualValue(data, "start", "end");
+};
+
+Particles.prototype._getMinMaxValue = function (data) {
+  return this._getDualValue(data, "min", "max");
+};
+
+Particles.prototype._prepareParticle = function (particle) {
+  const ex = Utilities.getRandom(
+    this.emitPositionX.min,
+    this.emitPositionX.max
+  );
+  const ey = Utilities.getRandom(
+    this.emitPositionY.min,
+    this.emitPositionY.max
+  );
+  particle.setEmitPosition(ex, ey);
+
   particle.setLifespan(this.lifespan);
-  particle.setSize(this.size.width, this.size.height);
-  particle.setAngle(this._getStartEndValue(this.angle));
-  particle.setAlpha(1);
-  particle.setEmitPosition(this.emitPosition.x, this.emitPosition.y);
   particle.setAcceleration(this.acceleration.x, this.acceleration.y);
   particle.setGravity(this.gravity.x, this.gravity.y);
-  particle.setScale(this.scale.x, this.scale.y);
+
+  particle.setAngle(this._getStartEndValue(this.angle));
+  particle.setAlpha(this._getStartEndValue(1));
 
   const velocity = {
     x: Math.random() * 1000 - 500,
     y: Math.random() * -750 - 500,
   };
   particle.setInitialVelocity(velocity.x, velocity.y);
+  // particle.setInitialVelocity(this.velocity.x, this.velocity.y);
 };
 
 Particles.prototype._emitParticle = function () {
   const particle = this._getFreeParticle();
   if (particle === undefined) return;
 
-  this._resetParticle(particle);
+  this._prepareParticle(particle);
   particle._emit();
   this._emitted += 1;
 
@@ -290,7 +302,7 @@ Particles.prototype._onTick = function () {
   active.forEach(
     function (particle) {
       particle._onParticleUpdate(dt);
-    }.bind(this)
+    } /* .bind(this) */
   );
 };
 

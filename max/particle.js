@@ -2,22 +2,18 @@ const Particle = function Particle(manager, frames) {
   this.sprite;
   this.isAlive = false;
 
+  this.alpha = { start: 1, end: 1, value: 0 };
   this.angle = { start: 0, end: 0, value: 0 };
+  this.width = { start: 50, end: 50, value: 0 };
+  this.height = { start: 50, end: 50, value: 0 };
 
-  this.x = 0;
-  this.y = 0;
-  this.alpha = 1;
-  this.scale = { x: 1, y: 1 };
-
-  this.emitPosition = { x: 0, y: 0 };
-  this.gravity = { x: 0, y: 0 };
-  this.initialVelocity = { x: 0, y: 0 };
-  this.maxVelocity = { x: 0, y: 0 };
-  this.acceleration = { x: 0, y: 0 };
-
+  this._emitPosition = { x: 0, y: 0 };
+  this._initialVelocity = { x: 0, y: 0 };
+  this._gravity = { x: 0, y: 0 };
+  this._acceleration = { x: 0, y: 0 };
   this._manager = manager;
   this._velocity = { x: 0, y: 0 };
-  this._size = { width: 100, height: 100 };
+  this._maxVelocity = { x: 0, y: 0 };
   this._t = 0;
 
   this.lifespan = 0;
@@ -32,8 +28,13 @@ Particle.prototype._createAnimatedSprite = function (frames) {
   this.sprite = new PIXI.AnimatedSprite(frames);
   this.sprite.anchor.set(0.5);
   this.sprite.visible = false;
-  this.setSize(this._size.width, this._size.height);
 };
+
+Particle.Property = function Property() {};
+Particle.Property.Alpha = "alpha";
+Particle.Property.Angle = "angle";
+Particle.Property.Height = "height";
+Particle.Property.Width = "width";
 
 Particle.prototype._onParticleUpdate = function (dt) {
   if (this.isAlive === false) return;
@@ -53,22 +54,37 @@ Particle.prototype._onParticleUpdate = function (dt) {
   this._manager._emitEvent(Particles.Events.ON_PARTICLE_UPDATE, this);
 
   this._updateVelocity();
-
   this.sprite.x += this._velocity.x * this.deltaTime;
   this.sprite.y += this._velocity.y * this.deltaTime;
+
+  // Update multi-value properties.
+  this._updateProperty(Particle.Property.Alpha);
+  this._updateProperty(Particle.Property.Angle);
+  this._updateProperty(Particle.Property.Height);
+  this._updateProperty(Particle.Property.Width);
+};
+
+Particle.prototype._updateProperty = function (property) {
+  const data = this[property];
+  data.value = Utilities.lerp(data.start, data.end, this._t);
+  this.sprite[property] = data.value;
 };
 
 Particle.prototype._emit = function () {
-  this.sprite.x = this.emitPosition.x;
-  this.sprite.y = this.emitPosition.y;
-  this.sprite.alpha = this.alpha;
-  this.sprite.angle = this.angle.start;
-  this.setSize(this._size.width, this._size.height);
+  this.sprite.x = this._emitPosition.x;
+  this.sprite.y = this._emitPosition.y;
+
+  this._updateProperty(Particle.Property.Alpha);
+  this._updateProperty(Particle.Property.Angle);
+  this._updateProperty(Particle.Property.Height);
+  this._updateProperty(Particle.Property.Width);
+
   this.sprite.visible = true;
+
   this.sprite.play();
 
-  this._velocity.x = this.initialVelocity.x;
-  this._velocity.y = this.initialVelocity.y;
+  this._velocity.x = this._initialVelocity.x;
+  this._velocity.y = this._initialVelocity.y;
 
   this._t = 0;
   this.elapsed = 0;
@@ -85,17 +101,17 @@ Particle.prototype._updateVelocity = function () {
   let vx = this._velocity.x;
   let vy = this._velocity.y;
 
-  vx += this.gravity.x * this.deltaTime;
-  vy += this.gravity.y * this.deltaTime;
+  vx += this._gravity.x * this.deltaTime;
+  vy += this._gravity.y * this.deltaTime;
 
-  vx += this.acceleration.x * this.deltaTime;
-  vy += this.acceleration.y * this.deltaTime;
+  vx += this._acceleration.x * this.deltaTime;
+  vy += this._acceleration.y * this.deltaTime;
 
-  if (this.maxVelocity.x != 0) {
-    vx = Utilities.clamp(vx, -this.maxVelocity.x, this.maxVelocity.x);
+  if (this._maxVelocity.x != 0) {
+    vx = Utilities.clamp(vx, -this._maxVelocity.x, this._maxVelocity.x);
   }
-  if (this.maxVelocity.y != 0) {
-    vy = Utilities.clamp(vy, -this.maxVelocity.y, this.maxVelocity.y);
+  if (this._maxVelocity.y != 0) {
+    vy = Utilities.clamp(vy, -this._maxVelocity.y, this._maxVelocity.y);
   }
 
   this._velocity.x = vx;
@@ -118,13 +134,13 @@ Particle.prototype.setLifespan = function (lifespan) {
 };
 
 Particle.prototype.setInitialVelocity = function (velocityX, velocityY) {
-  this.initialVelocity.x = velocityX;
-  this.initialVelocity.y = velocityY;
+  this._initialVelocity.x = velocityX;
+  this._initialVelocity.y = velocityY;
 };
 
 Particle.prototype.setMaxVelocity = function (maxVelocityX, maxVelocityY) {
-  this.maxVelocity.x = maxVelocityX;
-  this.maxVelocity.y = maxVelocityY;
+  this._maxVelocity.x = maxVelocityX;
+  this._maxVelocity.y = maxVelocityY;
 };
 
 Particle.prototype.setVelocity = function (velocityX, velocityY) {
@@ -133,33 +149,26 @@ Particle.prototype.setVelocity = function (velocityX, velocityY) {
 };
 
 Particle.prototype.setGravity = function (gravityX, gravityY) {
-  this.gravity.x = gravityX;
-  this.gravity.y = gravityY;
+  this._gravity.x = gravityX;
+  this._gravity.y = gravityY;
 };
 
 Particle.prototype.setAcceleration = function (accelerationX, accelerationY) {
-  this.acceleration.x = accelerationX;
-  this.acceleration.y = accelerationY;
+  this._acceleration.x = accelerationX;
+  this._acceleration.y = accelerationY;
 };
 
 Particle.prototype.setSize = function (width, height) {
-  this._size.width = width;
-  this._size.height = height;
+  this.width.start = width.start;
+  this.width.end = width.end;
 
-  this.sprite.width = width * this.scale.x;
-  this.sprite.height = height * this.scale.y;
-};
-
-Particle.prototype.setScale = function (x, y) {
-  this.scale.x = x;
-  this.scale.y = y;
-
-  this.setSize(this._size.width, this._size.height);
+  this.height.start = height.start;
+  this.height.end = height.end;
 };
 
 Particle.prototype.setEmitPosition = function (x, y) {
-  this.emitPosition.x = x;
-  this.emitPosition.y = y;
+  this._emitPosition.x = x;
+  this._emitPosition.y = y;
 };
 
 Particle.prototype.setAngle = function (angle) {
@@ -168,7 +177,8 @@ Particle.prototype.setAngle = function (angle) {
 };
 
 Particle.prototype.setAlpha = function (alpha) {
-  this.alpha = alpha;
+  this.alpha.start = alpha.start;
+  this.alpha.end = alpha.end;
 };
 
 Particle.prototype.destroy = function () {
